@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% set show_back = true %}
+{% block title %}运动记录{% endblock %}
+{% block header %}运动记录{% endblock %}
+
+{% block content %}
+<!-- 今日运动汇总 -->
+<div class="exercise-summary">
+    <span class="summary-label">今日运动时长</span>
+    <span class="summary-value">{{ today_total }}</span>
+</div>
+
+<!-- 录入表单 -->
+<section class="panel">
+    <h2 class="panel-title">添加运动记录</h2>
+    <form action="{{ url_for('exercise_add') }}" method="post" class="record-form">
+        <div class="form-row">
+            <label for="start_time">开始时间</label>
+            <input type="datetime-local" id="start_time" name="start_time" required>
+        </div>
+        <div class="form-row">
+            <label for="end_time">结束时间</label>
+            <input type="datetime-local" id="end_time" name="end_time" required>
+        </div>
+        <div class="form-row">
+            <label for="content">运动内容</label>
+            <textarea id="content" name="content" rows="3" maxlength="300" required
+                      placeholder="例如：跑步 5 公里、力量训练 30 分钟、打篮球"></textarea>
+        </div>
+        <div class="form-row">
+            <label for="note">备注 <span class="optional">（选填）</span></label>
+            <input type="text" id="note" name="note" maxlength="200"
+                   placeholder="例如：状态良好 / 室内">
+        </div>
+        <div class="form-actions">
+            <button type="button" class="btn btn-ghost" id="startNow">开始=现在</button>
+            <button type="submit" class="btn btn-primary">保存记录</button>
+        </div>
+    </form>
+</section>
+
+<!-- 历史记录 -->
+<section class="panel">
+    <h2 class="panel-title">历史记录 <span class="count-badge">{{ records|length }}</span></h2>
+
+    {% if records %}
+    <ul class="record-list">
+        {% for r in records %}
+        <li class="record-item exercise-item">
+            <div class="record-main">
+                <div class="record-line">
+                    <span class="dot dot-exercise-start"></span>
+                    开始：{{ r.start_time }}
+                </div>
+                <div class="record-line">
+                    <span class="dot dot-exercise-end"></span>
+                    结束：{{ r.end_time }}
+                </div>
+                <div class="exercise-content">{{ r.content }}</div>
+                {% if r.note %}
+                <div class="exercise-note">{{ r.note }}</div>
+                {% endif %}
+            </div>
+            <div class="record-side">
+                <span class="exercise-badge">{{ r.duration }}</span>
+                <form action="{{ url_for('exercise_delete', record_id=r.id) }}" method="post"
+                      class="delete-form" onsubmit="return confirm('确定删除这条记录吗？');">
+                    <button type="submit" class="btn-delete" title="删除">删除</button>
+                </form>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p class="empty-tip">还没有运动记录，添加第一条吧。</p>
+    {% endif %}
+</section>
+
+<script>
+// 把指定 datetime-local 输入框设为当前时间（精确到分钟）
+function setNow(inputId) {
+    var d = new Date();
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    document.getElementById(inputId).value = d.toISOString().slice(0, 16);
+}
+
+// 默认开始=今天 18:00、结束=今天 19:00
+(function initDefaults() {
+    var startInput = document.getElementById('start_time');
+    var endInput = document.getElementById('end_time');
+    if (!startInput.value) {
+        var d = new Date();
+        d.setHours(18, 0, 0, 0);
+        d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+        startInput.value = d.toISOString().slice(0, 16);
+    }
+    if (!endInput.value) {
+        var m = new Date();
+        m.setHours(19, 0, 0, 0);
+        m.setMinutes(m.getMinutes() - m.getTimezoneOffset());
+        endInput.value = m.toISOString().slice(0, 16);
+    }
+})();
+
+document.getElementById('startNow').addEventListener('click', function () {
+    setNow('start_time');
+});
+</script>
+{% endblock %}

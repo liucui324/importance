@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% set show_back = true %}
+{% block title %}糖分记录{% endblock %}
+{% block header %}糖分记录{% endblock %}
+
+{% block content %}
+<!-- 今日糖分汇总 -->
+<div class="sugar-summary">
+    <span class="summary-label">今日糖分摄入</span>
+    <span class="summary-value">{{ today_total }}<small> 克</small></span>
+</div>
+
+<!-- 本月糖分提醒 -->
+<div class="sugar-month sugar-month-{{ month_level }}">
+    <div class="sugar-month-row">
+        <span class="sugar-month-label">{{ month_label }}糖分摄入</span>
+        <span class="sugar-month-total">{{ month_total }} 克</span>
+    </div>
+    <div class="sugar-month-row">
+        <span class="sugar-month-avg">日均 {{ month_daily_avg }} 克</span>
+        <span class="sugar-month-tip">{{ month_reminder }}</span>
+    </div>
+</div>
+
+<!-- 录入表单 -->
+<section class="panel">
+    <h2 class="panel-title">添加糖分记录</h2>
+    <form action="{{ url_for('sugar_add') }}" method="post" class="record-form">
+        <div class="form-row">
+            <label for="record_date">日期</label>
+            <input type="date" id="record_date" name="record_date" value="{{ today }}" required>
+        </div>
+
+        <div class="form-row">
+            <label>快捷选择 <span class="optional">(参考含糖量，可修改)</span></label>
+            <div class="chip-grid">
+                {% for p in presets %}
+                <button type="button" class="chip"
+                        data-item="{{ p.item }}"
+                        data-grams="{{ p.grams }}">
+                    {{ p.item }}<span class="chip-grams">{{ p.grams }}g/{{ p.unit }}</span>
+                </button>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="form-row">
+            <label for="item">食物 / 饮品名称</label>
+            <input type="text" id="item" name="item" maxlength="50"
+                   placeholder="点上方按钮快速填入，或手动输入" required>
+        </div>
+
+        <div class="form-row form-row-inline">
+            <div>
+                <label for="sugar_grams">每份含糖量(克)</label>
+                <input type="number" id="sugar_grams" name="sugar_grams"
+                       min="0" step="0.1" inputmode="decimal" required>
+            </div>
+            <div>
+                <label for="quantity">份数</label>
+                <input type="number" id="quantity" name="quantity"
+                       min="0.1" step="0.1" value="1" inputmode="decimal" required>
+            </div>
+        </div>
+
+        <div class="sugar-preview">本次摄入糖分：<strong id="sugarPreview">0</strong> 克</div>
+
+        <div class="form-row">
+            <label for="note">备注 <span class="optional">(选填)</span></label>
+            <input type="text" id="note" name="note" maxlength="200"
+                   placeholder="例如：三分糖、大杯">
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">保存记录</button>
+        </div>
+    </form>
+</section>
+
+<!-- 历史记录（按日期分组） -->
+<section class="panel">
+    <h2 class="panel-title">历史记录</h2>
+
+    {% if groups %}
+        {% for g in groups %}
+        <div class="day-group">
+            <div class="day-header">
+                <span class="day-date">{{ g.date }}</span>
+                <span class="day-total">合计 {{ g.day_total }} 克</span>
+            </div>
+            <ul class="record-list">
+                {% for e in g.entries %}
+                <li class="record-item">
+                    <div class="record-main">
+                        <div class="sugar-line">
+                            <span class="sugar-name">{{ e.item }}</span>
+                            <span class="sugar-meta">×{{ e.quantity }}（{{ e.sugar_grams }}g/份）</span>
+                        </div>
+                        {% if e.note %}
+                        <div class="record-note">{{ e.note }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="record-side">
+                        <span class="sugar-badge">{{ e.total }}g</span>
+                        <form action="{{ url_for('sugar_delete', record_id=e.id) }}" method="post"
+                              class="delete-form" onsubmit="return confirm('确定删除这条记录吗？');">
+                            <button type="submit" class="btn-delete" title="删除">删除</button>
+                        </form>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endfor %}
+    {% else %}
+    <p class="empty-tip">还没有糖分记录，添加第一条吧。</p>
+    {% endif %}
+</section>
+
+<script>
+(function () {
+    var itemInput = document.getElementById('item');
+    var gramsInput = document.getElementById('sugar_grams');
+    var qtyInput = document.getElementById('quantity');
+    var preview = document.getElementById('sugarPreview');
+
+    // 实时计算本次糖分
+    function refreshPreview() {
+        var grams = parseFloat(gramsInput.value) || 0;
+        var qty = parseFloat(qtyInput.value) || 0;
+        var total = grams * qty;
+        preview.textContent = (Math.round(total * 10) / 10).toString();
+    }
+
+    // 快捷选择：填入名称和每份含糖量
+    document.querySelectorAll('.chip').forEach(function (chip) {
+        chip.addEventListener('click', function () {
+            itemInput.value = chip.dataset.item;
+            gramsInput.value = chip.dataset.grams;
+            document.querySelectorAll('.chip').forEach(function (c) {
+                c.classList.remove('chip-active');
+            });
+            chip.classList.add('chip-active');
+            refreshPreview();
+            itemInput.focus();
+        });
+    });
+
+    gramsInput.addEventListener('input', refreshPreview);
+    qtyInput.addEventListener('input', refreshPreview);
+    refreshPreview();
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% set show_back = true %}
+{% block title %}睡觉记录{% endblock %}
+{% block header %}睡觉记录{% endblock %}
+
+{% block content %}
+<!-- 录入表单 -->
+<section class="panel">
+    <h2 class="panel-title">添加睡觉记录</h2>
+    <form action="{{ url_for('sleep_add') }}" method="post" class="record-form">
+        <div class="form-row">
+            <label for="start_time">入睡时间</label>
+            <input type="datetime-local" id="start_time" name="start_time" required>
+        </div>
+        <div class="form-row">
+            <label for="end_time">起床时间</label>
+            <input type="datetime-local" id="end_time" name="end_time" required>
+        </div>
+        <div class="form-row">
+            <label for="note">备注 <span class="optional">(选填)</span></label>
+            <input type="text" id="note" name="note" maxlength="200"
+                   placeholder="例如：入睡有点困难">
+        </div>
+        <div class="form-actions">
+            <button type="button" class="btn btn-ghost" id="fillNow">入睡=现在</button>
+            <button type="submit" class="btn btn-primary">保存记录</button>
+        </div>
+    </form>
+</section>
+
+<!-- 历史记录 -->
+<section class="panel">
+    <h2 class="panel-title">历史记录 <span class="count-badge">{{ records|length }}</span></h2>
+
+    {% if records %}
+    <ul class="record-list">
+        {% for r in records %}
+        <li class="record-item">
+            <div class="record-main">
+                <div class="record-line">
+                    <span class="dot dot-start"></span>
+                    入睡：{{ r.start_time }}
+                </div>
+                <div class="record-line">
+                    <span class="dot dot-end"></span>
+                    起床：{{ r.end_time }}
+                </div>
+                {% if r.note %}
+                <div class="record-note">{{ r.note }}</div>
+                {% endif %}
+            </div>
+            <div class="record-side">
+                <span class="duration-badge">{{ r.duration }}</span>
+                <form action="{{ url_for('sleep_delete', record_id=r.id) }}" method="post"
+                      class="delete-form" onsubmit="return confirm('确定删除这条记录吗？');">
+                    <button type="submit" class="btn-delete" title="删除">删除</button>
+                </form>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p class="empty-tip">还没有睡觉记录，添加第一条吧。</p>
+    {% endif %}
+</section>
+
+<script>
+// 把 <input type="datetime-local"> 的值设为当前时间（精确到分钟）
+function setNow(inputId) {
+    var d = new Date();
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); // 转本地时区再取 ISO
+    document.getElementById(inputId).value =
+        d.toISOString().slice(0, 16);
+}
+
+// 页面加载后：空表单默认入睡=前一天23:00、起床=今天07:00，更贴合睡眠场景
+(function initDefaults() {
+    var startInput = document.getElementById('start_time');
+    var endInput = document.getElementById('end_time');
+    if (!startInput.value) {
+        var d = new Date();
+        d.setDate(d.getDate() - 1);
+        d.setHours(23, 0, 0, 0);
+        d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+        startInput.value = d.toISOString().slice(0, 16);
+    }
+    if (!endInput.value) {
+        var m = new Date();
+        m.setHours(7, 0, 0, 0);
+        m.setMinutes(m.getMinutes() - m.getTimezoneOffset());
+        endInput.value = m.toISOString().slice(0, 16);
+    }
+})();
+
+document.getElementById('fillNow').addEventListener('click', function () {
+    setNow('start_time');
+});
+</script>
+{% endblock %}

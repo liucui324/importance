@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}生活记录 · 主页{% endblock %}
+{% block header %}生活记录{% endblock %}
+
+{% block content %}
+<nav class="home-grid">
+    <a class="home-card card-sleep" href="{{ url_for('sleep_page') }}">
+        <span class="home-icon">&#128716;</span>
+        <span class="home-name">睡觉记录</span>
+        <span class="home-desc">入睡 / 起床时间</span>
+    </a>
+    <a class="home-card card-sugar" href="{{ url_for('sugar_page') }}">
+        <span class="home-icon">&#129473;</span>
+        <span class="home-name">糖分记录</span>
+        <span class="home-desc">每日糖分摄入</span>
+    </a>
+    <a class="home-card card-study" href="{{ url_for('study_page') }}">
+        <span class="home-icon">&#128218;</span>
+        <span class="home-name">学习记录</span>
+        <span class="home-desc">学习起止时间</span>
+    </a>
+    <a class="home-card card-toilet" href="{{ url_for('toilet_page') }}">
+        <span class="home-icon">&#128701;</span>
+        <span class="home-name">厕所记录</span>
+        <span class="home-desc">每日次数统计</span>
+    </a>
+    <a class="home-card card-exercise" href="{{ url_for('exercise_page') }}">
+        <span class="home-icon">&#127939;</span>
+        <span class="home-name">运动记录</span>
+        <span class="home-desc">运动起止时间</span>
+    </a>
+</nav>
+{% endblock %}

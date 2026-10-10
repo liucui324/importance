@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% set show_back = true %}
+{% block title %}厕所记录{% endblock %}
+{% block header %}厕所记录{% endblock %}
+
+{% block content %}
+<!-- 今日次数汇总 -->
+<div class="toilet-summary">
+    <span class="summary-label">今日次数</span>
+    <span class="summary-value">{{ today_count }}<small> 次</small></span>
+</div>
+
+<!-- 快速记一次 -->
+<form action="{{ url_for('toilet_quick') }}" method="post" class="quick-form">
+    <button type="submit" class="btn-quick">&#9986; 快速记一次</button>
+</form>
+
+<!-- 录入表单 -->
+<section class="panel">
+    <h2 class="panel-title">添加厕所记录</h2>
+    <form action="{{ url_for('toilet_add') }}" method="post" class="record-form">
+        <div class="form-row">
+            <label for="record_date">日期</label>
+            <input type="date" id="record_date" name="record_date" value="{{ today }}" required>
+        </div>
+
+        <div class="form-row">
+            <label for="count">次数</label>
+            <div class="stepper">
+                <button type="button" class="stepper-btn" id="minusBtn" aria-label="减少">&minus;</button>
+                <input type="number" id="count" name="count" value="1"
+                       min="1" step="1" inputmode="numeric" required>
+                <button type="button" class="stepper-btn" id="plusBtn" aria-label="增加">+</button>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <label for="note">备注 <span class="optional">(选填)</span></label>
+            <input type="text" id="note" name="note" maxlength="200"
+                   placeholder="例如：拉肚子、多喝水了">
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">保存记录</button>
+        </div>
+    </form>
+</section>
+
+<!-- 历史记录 -->
+<section class="panel">
+    <h2 class="panel-title">历史记录 <span class="count-badge">{{ records|length }}</span></h2>
+
+    {% if records %}
+    <ul class="record-list">
+        {% for r in records %}
+        <li class="record-item">
+            <div class="record-main">
+                <div class="record-line toilet-date-line">{{ r.record_date }}</div>
+                {% if r.note %}
+                <div class="record-note">{{ r.note }}</div>
+                {% endif %}
+            </div>
+            <div class="record-side">
+                <span class="toilet-badge">{{ r.count }}次</span>
+                <form action="{{ url_for('toilet_delete', record_id=r.id) }}" method="post"
+                      class="delete-form" onsubmit="return confirm('确定删除这条记录吗？');">
+                    <button type="submit" class="btn-delete" title="删除">删除</button>
+                </form>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p class="empty-tip">还没有厕所记录，添加第一条吧。</p>
+    {% endif %}
+</section>
+
+<script>
+(function () {
+    var input = document.getElementById('count');
+
+    function change(delta) {
+        var v = parseInt(input.value, 10);
+        if (isNaN(v)) v = 0;
+        v += delta;
+        if (v < 1) v = 1;   // 次数最少为 1
+        input.value = v;
+    }
+
+    document.getElementById('minusBtn').addEventListener('click', function () { change(-1); });
+    document.getElementById('plusBtn').addEventListener('click', function () { change(1); });
+})();
+</script>
+{% endblock %}
